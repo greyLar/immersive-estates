@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "AI-Powered 360° Real Estate Photography — Lead Generation & Booking System",
   "scripts": {
-    "start": "cd backend && node setup.js && node server.js",
+    "start": "cd backend && npm install && node setup.js && node server.js",
     "build": "cd backend && npm install && cd ../frontend && npm install && npm run build",
     "dev:backend": "cd backend && npm start",
     "dev:frontend": "cd frontend && npm run dev"
