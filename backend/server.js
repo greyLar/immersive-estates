@@ -16,7 +16,7 @@ const GOOGLE_REVIEW_URL = process.env.GOOGLE_REVIEW_URL || "https://g.page/immer
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
   app.use(express.static(frontendDist));
-  app.get('*', (req, res) => {
+  app.use((req, res) => {
     if (!req.path.startsWith('/api')) {
       res.sendFile(path.join(frontendDist, 'index.html'));
     }
