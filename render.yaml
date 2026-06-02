@@ -1,0 +1,43 @@
+# ImmersiveEstates — Render Blueprint
+# Deploys the full stack (API + Frontend) as a single Web Service
+
+services:
+  - type: web
+    name: immersive-estates
+    runtime: node
+    repo: https://github.com/YOUR_USERNAME/immersive-estates
+    plan: free
+    region: oregon
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/metrics
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: GOOGLE_REVIEW_URL
+        value: https://g.page/r/YOUR_PLACE_ID/review
+      - key: NOTIFICATION_EMAIL
+        value: you@immersive-estates.com
+      # Email — uncomment and add your keys when ready
+      # - key: EMAIL_ENABLED
+      #   sync: false
+      # - key: SENDGRID_API_KEY
+      #   sync: false
+      # SMS — uncomment and add your keys when ready
+      # - key: SMS_ENABLED
+      #   sync: false
+      # - key: TWILIO_ACCOUNT_SID
+      #   sync: false
+      # - key: TWILIO_AUTH_TOKEN
+      #   sync: false
+      # - key: TWILIO_PHONE
+      #   sync: false
+      # Calendar — uncomment and add your keys when ready
+      # - key: CALENDAR_ENABLED
+      #   sync: false
+      # - key: GOOGLE_CALENDAR_ID
+      #   sync: false

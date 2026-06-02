@@ -1,0 +1,38 @@
+# Backend Status - ImmersiveEstates
+
+## API Server
+- **Port:** 3001
+- **Tech Stack:** Node.js, Express, team-db (Turso/SQLite)
+- **Status:** Running
+
+## Endpoints Implemented
+- **Leads:** POST /api/leads, GET /api/leads, PUT /api/leads/:id, POST /api/leads/:id/qualify
+- **Bookings:** POST /api/bookings, GET /api/bookings, PUT /api/bookings/:id, POST /api/bookings/:id/confirm
+- **Chat:** POST /api/chat/message (AI Sales Assistant), GET /api/chat/history/:lead_id
+- **Outreach:** POST /api/outreach, GET /api/outreach/pending
+- **Reviews:** POST /api/reviews/request, GET /api/reviews/pending
+- **Metrics:** GET /api/metrics (KPI data)
+
+## AI Assistant Logic
+The `/api/chat/message` endpoint implements a state-machine based AI sales assistant that:
+1. Greets the user and collects name/brokerage.
+2. Qualifies the lead based on monthly listing volume.
+3. Routes to "website track" or "Zillow track".
+4. Pitches and attempts to book a 360° photo shoot.
+5. Persists conversation state and lead data.
+
+## Database Schema
+Tables created in the shared database:
+- `leads`: Lead contact info and qualification status.
+- `bookings`: Property shoot details and status.
+- `outreach`: Log of communications with leads.
+- `conversations`: AI chat session state.
+- `reviews`: Google review requests and status.
+
+## How to Run
+```bash
+cd /home/team/shared/immersive-estates/backend
+npm install
+npm run setup # Initializes database
+npm start     # Starts server on 0.0.0.0:3001
+```
