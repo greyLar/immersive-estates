@@ -430,6 +430,13 @@ app.get('/api/metrics', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
+  // Initialize database if not already done
+  try {
+    await db.initDb();
+    console.log('Database ready');
+  } catch (err) {
+    console.error('Database init error:', err.message);
+  }
   console.log(`Server listening on http://0.0.0.0:${PORT}`);
 });
