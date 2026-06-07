@@ -2,50 +2,48 @@ import React from 'react';
 
 const About = () => {
   return (
-    <div id="about" className="bg-white py-16 px-4 overflow-hidden sm:px-6 lg:px-8 lg:py-24">
-      <div className="relative max-w-7xl mx-auto">
-        <div className="text-center">
-          <h2 className="text-base text-secondary font-semibold tracking-wide uppercase">About Us</h2>
-          <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Excellence in Immersive Real Estate Media
-          </p>
-          <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            ImmersiveEstates was founded with one goal: to help real estate professionals leverage the power of 360° technology to sell homes faster.
-          </p>
-        </div>
-        <div className="mt-12 grid grid-cols-1 gap-y-12 lg:grid-cols-3 lg:gap-x-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="mt-5 text-lg font-medium text-gray-900">Innovation</h3>
-            <p className="mt-2 text-base text-gray-500">
-              We use the latest 360° cameras and AI-powered processing to deliver stunning virtual tours.
+    <div id="about" className="bg-[#0E0E0E] py-24 overflow-hidden relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-24 lg:items-center">
+          <div className="relative">
+            <h2 className="text-[#B8966A] text-sm font-bold uppercase tracking-[0.4em] mb-4">Our Mission</h2>
+            <p className="text-4xl font-black text-[#F2EDE4] sm:text-5xl leading-tight">
+              AI-Driven Sales, <br />
+              <span className="text-[#B8966A]">Human-Grade Art.</span>
             </p>
+            <div className="mt-8 space-y-6 text-lg text-[#F2EDE4]/60 leading-relaxed">
+              <p>
+                ImmersiveEstates was founded on a simple principle: real estate agents should spend their time closing deals, not hunting for leads or managing photo shoots.
+              </p>
+              <p>
+                Our proprietary AI system works 24/7 to identify high-potential listings and automate the outreach process, while our network of professional photographers captures stunning 360° tours that sell homes faster.
+              </p>
+            </div>
+            <div className="mt-10 grid grid-cols-2 gap-8 border-t border-[#B8966A]/10 pt-10">
+              <div>
+                <p className="text-3xl font-black text-[#B8966A]">24h</p>
+                <p className="text-xs font-bold text-[#F2EDE4]/40 uppercase tracking-widest mt-1">Average Turnaround</p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-[#B8966A]">300%</p>
+                <p className="text-xs font-bold text-[#F2EDE4]/40 uppercase tracking-widest mt-1">Engagement Boost</p>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div className="mt-16 lg:mt-0 relative">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-[#B8966A]/20">
+              <img
+                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800"
+                alt="Modern office"
+                className="w-full h-[500px] object-cover grayscale-[50%] hover:grayscale-0 transition duration-1000"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#0E0E0E] via-transparent to-transparent opacity-60"></div>
             </div>
-            <h3 className="mt-5 text-lg font-medium text-gray-900">Efficiency</h3>
-            <p className="mt-2 text-base text-gray-500">
-              Our 24-hour turnaround means your listing hits the market with professional media faster.
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white mx-auto">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            {/* Floating badge */}
+            <div className="absolute -bottom-8 -left-8 bg-[#171714] p-8 rounded-2xl border border-[#B8966A]/30 shadow-2xl hidden md:block">
+              <p className="text-[#B8966A] text-2xl font-black">1,000+</p>
+              <p className="text-[#F2EDE4]/40 text-[10px] font-bold uppercase tracking-widest mt-1">Tours Delivered</p>
             </div>
-            <h3 className="mt-5 text-lg font-medium text-gray-900">Quality</h3>
-            <p className="mt-2 text-base text-gray-500">
-              Every shoot is vetted for professional lighting, crisp detail, and immersive perspective.
-            </p>
           </div>
         </div>
       </div>

@@ -78,18 +78,25 @@ const BookingForm = () => {
   };
 
   return (
-    <div id="contact" className="bg-gray-50 py-16 px-4 overflow-hidden sm:px-6 lg:px-8 lg:py-24 border-t border-gray-200">
-      <div className="relative max-w-xl mx-auto">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">Book Your Shoot</h2>
-          <p className="mt-4 text-lg leading-6 text-gray-500">
-            Fill out the form below and we'll confirm your booking within the hour.
+    <div id="contact" className="bg-[#171714] py-24 border-t border-[#B8966A]/10 px-8 relative overflow-hidden">
+      {/* Background patterns */}
+      <div className="absolute top-0 right-0 w-full h-full opacity-5 pointer-events-none select-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#B8966A] rounded-full blur-[150px]"></div>
+      </div>
+
+      <div className="relative max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-[#B8966A] text-sm font-bold uppercase tracking-[0.4em] mb-4">Scheduling</h2>
+          <p className="text-4xl font-black text-[#F2EDE4] sm:text-5xl">Book Your Shoot</p>
+          <p className="mt-6 text-[#F2EDE4]/60 text-lg">
+            Secure your session today. We'll confirm via email within minutes.
           </p>
         </div>
-        <div className="mt-12">
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8">
+
+        <div className="bg-[#0E0E0E] rounded-3xl p-8 md:p-12 border border-[#B8966A]/20 shadow-2xl">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-10">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+              <label htmlFor="name" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Full Name</label>
               <input
                 type="text"
                 name="name"
@@ -97,11 +104,12 @@ const BookingForm = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300"
+                placeholder="John Doe"
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <label htmlFor="email" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Email Address</label>
               <input
                 type="email"
                 name="email"
@@ -109,11 +117,12 @@ const BookingForm = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300"
+                placeholder="john@brokerage.com"
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <label htmlFor="phone" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Phone Number</label>
               <input
                 type="text"
                 name="phone"
@@ -121,11 +130,12 @@ const BookingForm = () => {
                 required
                 value={formData.phone}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300"
+                placeholder="(555) 000-0000"
               />
             </div>
             <div>
-              <label htmlFor="brokerage" className="block text-sm font-medium text-gray-700">Brokerage</label>
+              <label htmlFor="brokerage" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Brokerage</label>
               <input
                 type="text"
                 name="brokerage"
@@ -133,11 +143,12 @@ const BookingForm = () => {
                 required
                 value={formData.brokerage}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300"
+                placeholder="RE/MAX Elite"
               />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">Property Address</label>
+              <label htmlFor="address" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Property Address</label>
               <input
                 type="text"
                 name="address"
@@ -145,11 +156,12 @@ const BookingForm = () => {
                 required
                 value={formData.address}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300"
+                placeholder="123 Luxury Lane, San Francisco, CA"
               />
             </div>
             <div>
-              <label htmlFor="shootDate" className="block text-sm font-medium text-gray-700">Preferred Date</label>
+              <label htmlFor="shootDate" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Preferred Date</label>
               <input
                 type="date"
                 name="shootDate"
@@ -157,11 +169,11 @@ const BookingForm = () => {
                 required
                 value={formData.shootDate}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300 [color-scheme:dark]"
               />
             </div>
             <div>
-              <label htmlFor="shootTime" className="block text-sm font-medium text-gray-700">Preferred Time</label>
+              <label htmlFor="shootTime" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Preferred Time</label>
               <input
                 type="time"
                 name="shootTime"
@@ -169,36 +181,40 @@ const BookingForm = () => {
                 required
                 value={formData.shootTime}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300 [color-scheme:dark]"
               />
             </div>
             <div className="sm:col-span-2">
-              <label htmlFor="instructions" className="block text-sm font-medium text-gray-700">Access Instructions</label>
+              <label htmlFor="instructions" className="block text-[10px] font-bold uppercase tracking-widest text-[#B8966A] mb-2">Access Instructions</label>
               <textarea
                 id="instructions"
                 name="instructions"
                 rows="4"
                 value={formData.instructions}
                 onChange={handleChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-secondary focus:border-secondary border px-4 py-2 outline-none text-gray-900 bg-white"
-                placeholder="Lockbox code, gate instructions, etc."
+                className="w-full bg-[#171714] border border-[#B8966A]/20 rounded-xl px-6 py-4 text-[#F2EDE4] focus:border-[#B8966A] outline-none transition duration-300"
+                placeholder="Lockbox code, gate instructions, or special requests..."
               ></textarea>
             </div>
             <div className="sm:col-span-2">
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-secondary hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary disabled:opacity-50 transition"
+                className="w-full bg-[#B8966A] text-[#0E0E0E] py-5 rounded-xl font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-[#D4B68A] transition duration-500 disabled:opacity-50"
               >
-                {status === 'sending' ? 'Sending...' : 'Confirm Booking'}
+                {status === 'sending' ? 'Processing...' : 'Confirm Shoot Request'}
               </button>
             </div>
           </form>
           {status === 'success' && (
-            <p className="mt-4 text-center text-green-600 font-medium">Booking submitted successfully! We will contact you shortly.</p>
+            <div className="mt-8 bg-green-500/10 border border-green-500/20 p-4 rounded-xl text-center">
+              <p className="text-green-400 font-bold">Booking submitted successfully! We will contact you shortly.</p>
+            </div>
           )}
           {status === 'error' && (
-            <p className="mt-4 text-center text-red-600 font-medium">There was an error submitting your booking. Please try again.</p>
+            <div className="mt-8 bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-center">
+              <p className="text-red-400 font-bold">Error submitting booking. Please try again.</p>
+            </div>
           )}
         </div>
       </div>

@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
+const multer = require('multer');
 const db = require('./db');
 const { sendEmail, sendSMS, createCalendarEvent, formatLeadNotification, calculateEndTime } = require('./services');
 require('dotenv').config();
@@ -11,6 +14,42 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 const GOOGLE_REVIEW_URL = process.env.GOOGLE_REVIEW_URL || "https://g.page/immersive-estates/review";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+
+// Ensure uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+// Admin Authentication Middleware
+const getAdminToken = () => `admin-${crypto.createHash('md5').update(ADMIN_PASSWORD).digest('hex')}`;
+
+function authenticateAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (token === getAdminToken()) {
+    next();
+  } else {
+    res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+}
+
+// Serve uploaded files
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Serve built frontend in production
 if (process.env.NODE_ENV === 'production') {
@@ -428,6 +467,184 @@ app.get('/api/metrics', (req, res) => {
     pending_followups: pendingFollowups,
     avg_listings_per_lead: avgListings.toFixed(1)
   });
+});
+
+// --- ADMIN AUTH ---
+
+app.post('/api/admin/login', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    res.json({ success: true, token: getAdminToken() });
+  } else {
+    res.status(401).json({ success: false, error: 'Invalid password' });
+  }
+});
+
+app.get('/api/admin/check', authenticateAdmin, (req, res) => {
+  res.json({ success: true, authenticated: true });
+});
+
+// --- PRICING ---
+
+app.get('/api/pricing', (req, res) => {
+  const tiers = db.query("SELECT * FROM pricing_tiers ORDER BY sort_order ASC");
+  res.json({ tiers });
+});
+
+app.get('/api/admin/pricing', authenticateAdmin, (req, res) => {
+  const tiers = db.query("SELECT * FROM pricing_tiers ORDER BY sort_order ASC");
+  res.json({ tiers });
+});
+
+app.post('/api/admin/pricing', authenticateAdmin, (req, res) => {
+  const { name, price, description, features, featured, sort_order } = req.body;
+  const sql = `INSERT INTO pricing_tiers (name, price, description, features, featured, sort_order) 
+               VALUES ('${name}', '${price}', '${description || ''}', '${JSON.stringify(features || [])}', ${featured ? 1 : 0}, ${sort_order || 0})`;
+  db.execute(sql);
+  res.json({ success: true });
+});
+
+app.put('/api/admin/pricing/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const updates = [];
+  for (const [key, value] of Object.entries(req.body)) {
+    if (['name', 'price', 'description', 'features', 'featured', 'sort_order'].includes(key)) {
+      const val = key === 'features' ? JSON.stringify(value) : (typeof value === 'boolean' ? (value ? 1 : 0) : value);
+      updates.push(`${key} = '${val}'`);
+    }
+  }
+  db.execute(`UPDATE pricing_tiers SET ${updates.join(', ')} WHERE id = ${id}`);
+  res.json({ success: true });
+});
+
+app.delete('/api/admin/pricing/:id', authenticateAdmin, (req, res) => {
+  db.execute(`DELETE FROM pricing_tiers WHERE id = ${req.params.id}`);
+  res.json({ success: true });
+});
+
+// --- SITE CONTENT ---
+
+app.get('/api/content', (req, res) => {
+  const rows = db.query("SELECT * FROM site_content");
+  const content = {};
+  rows.forEach(r => content[r.section] = JSON.parse(r.content));
+  res.json({ content });
+});
+
+app.get('/api/admin/content', authenticateAdmin, (req, res) => {
+  const rows = db.query("SELECT * FROM site_content");
+  res.json({ sections: rows.map(r => ({ section: r.section, content: JSON.parse(r.content) })) });
+});
+
+app.get('/api/admin/content/:section', authenticateAdmin, (req, res) => {
+  const rows = db.query(`SELECT * FROM site_content WHERE section = '${req.params.section}'`);
+  if (rows.length === 0) return res.status(404).json({ error: 'Section not found' });
+  res.json({ section: rows[0].section, content: JSON.parse(rows[0].content) });
+});
+
+app.put('/api/admin/content/:section', authenticateAdmin, (req, res) => {
+  const { content } = req.body;
+  db.execute(`UPDATE site_content SET content = '${JSON.stringify(content).replace(/'/g, "''")}', updated_at = CURRENT_TIMESTAMP WHERE section = '${req.params.section}'`);
+  res.json({ success: true });
+});
+
+// --- PORTFOLIO ---
+
+app.get('/api/portfolio', (req, res) => {
+  const properties = db.query("SELECT * FROM portfolio WHERE published = 1 ORDER BY sort_order ASC");
+  res.json({ portfolio: properties.map(p => ({ ...p, rooms: JSON.parse(p.rooms || '[]') })) });
+});
+
+app.get('/api/portfolio/:id', (req, res) => {
+  const rows = db.query(`SELECT * FROM portfolio WHERE id = ${req.params.id}`);
+  if (rows.length === 0) return res.status(404).json({ error: 'Property not found' });
+  res.json({ property: { ...rows[0], rooms: JSON.parse(rows[0].rooms || '[]') } });
+});
+
+app.get('/api/admin/portfolio', authenticateAdmin, (req, res) => {
+  const properties = db.query("SELECT * FROM portfolio ORDER BY sort_order ASC");
+  res.json({ portfolio: properties.map(p => ({ ...p, rooms: JSON.parse(p.rooms || '[]') })) });
+});
+
+app.post('/api/admin/portfolio', authenticateAdmin, (req, res) => {
+  const { title, address, description, published, sort_order } = req.body;
+  const sql = `INSERT INTO portfolio (title, address, description, published, sort_order, rooms) 
+               VALUES ('${title}', '${address || ''}', '${description || ''}', ${published ? 1 : 0}, ${sort_order || 0}, '[]')`;
+  db.execute(sql);
+  res.json({ success: true });
+});
+
+app.put('/api/admin/portfolio/:id', authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+  const updates = [];
+  for (const [key, value] of Object.entries(req.body)) {
+    if (['title', 'address', 'description', 'published', 'sort_order'].includes(key)) {
+      const val = typeof value === 'boolean' ? (value ? 1 : 0) : value;
+      updates.push(`${key} = '${val}'`);
+    }
+  }
+  updates.push(`updated_at = CURRENT_TIMESTAMP`);
+  db.execute(`UPDATE portfolio SET ${updates.join(', ')} WHERE id = ${id}`);
+  res.json({ success: true });
+});
+
+app.delete('/api/admin/portfolio/:id', authenticateAdmin, (req, res) => {
+  const rows = db.query(`SELECT * FROM portfolio WHERE id = ${req.params.id}`);
+  if (rows.length > 0) {
+    const property = rows[0];
+    const rooms = JSON.parse(property.rooms || '[]');
+    // Delete files
+    if (property.thumbnail) {
+      try { fs.unlinkSync(path.join(UPLOADS_DIR, property.thumbnail)); } catch (e) {}
+    }
+    rooms.forEach(r => {
+      try { fs.unlinkSync(path.join(UPLOADS_DIR, r.filename)); } catch (e) {}
+    });
+    db.execute(`DELETE FROM portfolio WHERE id = ${req.params.id}`);
+  }
+  res.json({ success: true });
+});
+
+app.post('/api/admin/portfolio/:id/thumbnail', authenticateAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  
+  const rows = db.query(`SELECT thumbnail FROM portfolio WHERE id = ${req.params.id}`);
+  if (rows.length > 0 && rows[0].thumbnail) {
+    try { fs.unlinkSync(path.join(UPLOADS_DIR, rows[0].thumbnail)); } catch (e) {}
+  }
+  
+  db.execute(`UPDATE portfolio SET thumbnail = '${req.file.filename}', updated_at = CURRENT_TIMESTAMP WHERE id = ${req.params.id}`);
+  res.json({ success: true, filename: req.file.filename });
+});
+
+app.post('/api/admin/portfolio/:id/rooms', authenticateAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const { roomName } = req.body;
+  
+  const rows = db.query(`SELECT rooms FROM portfolio WHERE id = ${req.params.id}`);
+  if (rows.length === 0) return res.status(404).json({ error: 'Property not found' });
+  
+  const rooms = JSON.parse(rows[0].rooms || '[]');
+  rooms.push({ name: roomName || 'Unnamed Room', filename: req.file.filename });
+  
+  db.execute(`UPDATE portfolio SET rooms = '${JSON.stringify(rooms).replace(/'/g, "''")}', updated_at = CURRENT_TIMESTAMP WHERE id = ${req.params.id}`);
+  res.json({ success: true, rooms });
+});
+
+app.delete('/api/admin/portfolio/:id/rooms/:roomIndex', authenticateAdmin, (req, res) => {
+  const rows = db.query(`SELECT rooms FROM portfolio WHERE id = ${req.params.id}`);
+  if (rows.length === 0) return res.status(404).json({ error: 'Property not found' });
+  
+  let rooms = JSON.parse(rows[0].rooms || '[]');
+  const index = parseInt(req.params.roomIndex);
+  
+  if (rooms[index]) {
+    try { fs.unlinkSync(path.join(UPLOADS_DIR, rooms[index].filename)); } catch (e) {}
+    rooms.splice(index, 1);
+    db.execute(`UPDATE portfolio SET rooms = '${JSON.stringify(rooms).replace(/'/g, "''")}', updated_at = CURRENT_TIMESTAMP WHERE id = ${req.params.id}`);
+  }
+  
+  res.json({ success: true, rooms });
 });
 
 app.listen(PORT, '0.0.0.0', async () => {
