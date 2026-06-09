@@ -447,8 +447,8 @@ function renderGrid(){
   const el = document.getElementById('pgrid');
   if(!PROPS.length){ el.innerHTML='<div class="empty">No properties yet.</div>'; return; }
   el.innerHTML = PROPS.map(p=>{
-    const thumb = p.scenes&&p.scenes[0]&&p.scenes[0].dataUrl
-      ? `<img src="${p.scenes[0].dataUrl}" alt="${p.address}"/>`
+    const thumb = p.scenes&&p.scenes[0]&&p.scenes[0].imageUrl
+      ? `<img src="${p.scenes[0].imageUrl}" alt="${p.address}"/>`
       : `<div class="icon"><svg width="40" height="40" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="22" cy="22" r="19"/><ellipse cx="22" cy="22" rx="10" ry="19"/><line x1="3" y1="22" x2="41" y2="22"/><path d="M6 14 Q22 18 38 14"/><path d="M6 30 Q22 26 38 30"/></svg><span>360° TOUR</span></div>`;
     const rc = p.scenes?p.scenes.length:0;
     return `<div class="pcard" onclick="openViewerDirect('${p.id}')">
@@ -503,7 +503,7 @@ function loadScene(idx){
   img.onerror = ()=>{
     document.getElementById('pano-loading').textContent='Could not load panorama image.';
   };
-  img.src = sc.dataUrl || sc.imageUrl || '';
+  img.src = sc.imageUrl || sc.dataUrl || '';
 }
 
 function initThree(container, img){
@@ -651,8 +651,10 @@ function cp(txt,btn){
 }
 
 // ══════════════════════════════════════
-// Tour Builder
+// Tour Builder — uploads to Cloudinary
 // ══════════════════════════════════════
+const CLOUD_NAME = 'dabm3wbky';
+const UPLOAD_PRESET = 'immersive_estates';
 let pendingFiles=[];
 const MAX_W=6000, MAX_H=3000, JPEG_Q=0.85;
 
@@ -689,7 +691,26 @@ function resizeImg(file){
       if(w>MAX_W||h>MAX_H){ const r=Math.min(MAX_W/w,MAX_H/h); w=Math.round(w*r); h=Math.round(h*r); }
       const c=document.createElement('canvas'); c.width=w; c.height=h;
       c.getContext('2d').drawImage(img,0,0,w,h);
-      res({ dataUrl:c.toDataURL('image/jpeg',JPEG_Q), w, h });
+      
+      // Upload to Cloudinary
+      c.toBlob((blob)=>{
+        const fd = new FormData();
+        fd.append('file', blob);
+        fd.append('upload_preset', UPLOAD_PRESET);
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.cloudinary.com/v1_1/'+CLOUD_NAME+'/image/upload');
+        xhr.onload = () => {
+          if(xhr.status === 200){
+            const data = JSON.parse(xhr.responseText);
+            res({ imageUrl: data.secure_url, w, h, cloudinaryId: data.public_id });
+          } else {
+            rej(new Error('Cloudinary upload failed: '+xhr.status));
+          }
+        };
+        xhr.onerror = () => rej(new Error('Network error uploading to Cloudinary'));
+        xhr.send(fd);
+      }, 'image/jpeg', JPEG_Q);
     };
     img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('Cannot read: '+file.name)); };
     img.src=url;
@@ -725,10 +746,10 @@ function addProperty(){
     }
     const f=pendingFiles[i];
     setStatus(`Resizing photo ${i+1} of ${pendingFiles.length}: ${f.name}…`);
-    resizeImg(f).then(({dataUrl,w,h})=>{
+    resizeImg(f).then(({imageUrl,w,h})=>{
       const base=f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ');
       const title=base.charAt(0).toUpperCase()+base.slice(1);
-      scenes[i]={id:slugify(title)||`room-${i+1}`,title:title||`Room ${i+1}`,filename:f.name,resizedTo:`${w}×${h}`,dataUrl};
+      scenes[i]={id:slugify(title)||`room-${i+1}`,title:title||`Room ${i+1}`,filename:f.name,imageUrl};
       next(i+1);
     }).catch(e=>{ btn.disabled=false; btn.textContent='Add Property & Generate Tour'; setStatus('Error: '+e.message,'err'); });
   }
