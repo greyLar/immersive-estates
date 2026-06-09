@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ImmersiveEstates</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --g:#B8966A;--dk:#0E0E0E;--sf:#171714;--sf2:#1F1F1B;
+  --tx:#F2EDE4;--mt:#9A9A8A;--br:rgba(184,150,106,0.22);--brh:rgba(184,150,106,0.6);
+  --red:#E05C5C;--green:#5CB85C;
+}
+body{background:var(--dk);color:var(--tx);font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;min-height:100vh;}
+.page{display:none;}.page.active{display:block;}
+
+/* HEADER */
+.hdr{padding:0.85rem 1.5rem;display:flex;align-items:center;gap:0.75rem;
+  border-bottom:1px solid var(--br);background:var(--sf);position:sticky;top:0;z-index:50;}
+.home-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;
+  background:var(--sf2);border:1px solid var(--br);color:var(--tx);cursor:pointer;transition:all 0.2s;}
+.home-btn:hover{background:var(--g);border-color:var(--g);color:var(--dk);}
+.logo{font-family:Georgia,serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--tx);cursor:default;margin-left:auto;user-select:none;}
+.logo em{font-style:normal;color:var(--g);}
+.crumb{display:flex;align-items:center;gap:0.5rem;font-size:0.65rem;letter-spacing:0.1em;color:var(--mt);flex:1;}
+.crumb b{color:var(--tx);font-weight:400;}
+
+/* BUTTONS */
+.btn-gold{padding:0.5rem 1.1rem;background:var(--g);color:var(--dk);border:none;
+  font-family:inherit;font-size:0.7rem;letter-spacing:0.1em;cursor:pointer;font-weight:600;transition:opacity 0.2s;}
+.btn-gold:hover{opacity:0.85;}.btn-gold:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-out{padding:0.45rem 1rem;background:transparent;border:1px solid rgba(184,150,106,0.5);
+  color:var(--g);font-family:inherit;font-size:0.68rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;}
+.btn-out:hover{background:var(--g);color:var(--dk);}
+.btn-dim{padding:0.45rem 1rem;background:var(--sf2);border:1px solid var(--br);
+  color:var(--tx);font-family:inherit;font-size:0.68rem;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;}
+.btn-dim:hover{border-color:var(--brh);}
+.btn-del{padding:0.38rem 0.8rem;background:transparent;border:1px solid rgba(224,92,92,0.35);
+  color:var(--red);font-family:inherit;font-size:0.65rem;cursor:pointer;transition:all 0.2s;}
+.btn-del:hover{background:var(--red);color:#fff;}
+
+/* HOME */
+.hero{padding:2.5rem 2rem 1.5rem;border-bottom:1px solid var(--br);}
+.hero h1{font-family:Georgia,serif;font-size:2.2rem;font-weight:400;line-height:1.15;}
+.hero p{margin-top:0.5rem;color:var(--mt);font-size:0.65rem;letter-spacing:0.2em;}
+.gold-line{width:32px;height:1px;background:var(--g);margin-top:1.2rem;}
+.pgrid{padding:1.5rem 2rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.2rem;}
+.empty{padding:3rem 2rem;text-align:center;color:var(--mt);font-size:0.8rem;line-height:1.8;}
+.secret-hint{text-align:center;padding:0.75rem;font-size:0.6rem;color:rgba(122,122,106,0.3);letter-spacing:0.1em;min-height:2rem;}
+
+/* PROPERTY CARD */
+.pcard{border:1px solid var(--br);background:var(--sf);cursor:pointer;transition:border-color 0.2s,transform 0.2s;}
+.pcard:hover{border-color:var(--brh);transform:translateY(-2px);}
+.pthumb{height:155px;background:var(--sf2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.pthumb img{width:100%;height:100%;object-fit:cover;opacity:0.75;}
+.pthumb .icon{color:rgba(184,150,106,0.35);display:flex;flex-direction:column;align-items:center;gap:0.5rem;}
+.pthumb .icon span{font-size:0.55rem;letter-spacing:0.15em;color:var(--mt);}
+.tbadge{position:absolute;top:10px;right:10px;background:var(--g);color:#0E0E0E;font-size:0.58rem;letter-spacing:0.14em;padding:3px 8px;font-weight:600;}
+.rcount{position:absolute;bottom:10px;left:10px;background:rgba(14,14,14,0.8);color:var(--tx);font-size:0.58rem;letter-spacing:0.1em;padding:3px 8px;}
+.pinfo{padding:1rem 1.1rem 1.1rem;}
+.pinfo h3{font-size:0.82rem;letter-spacing:0.1em;font-weight:400;}
+.pinfo p{color:var(--mt);font-size:0.63rem;margin-top:0.25rem;line-height:1.5;}
+.view-btn{margin-top:0.9rem;width:100%;padding:0.65rem;background:var(--g);color:var(--dk);
+  border:none;font-family:inherit;font-size:0.68rem;letter-spacing:0.14em;cursor:pointer;font-weight:600;transition:opacity 0.2s;}
+.view-btn:hover{opacity:0.88;}
+
+/* VIEWER */
+.viewer-body{display:flex;height:calc(100vh - 54px);}
+#pano{flex:1;background:#111;}
+#pano-loading{flex:1;background:#111;display:flex;align-items:center;justify-content:center;color:var(--mt);font-size:0.75rem;letter-spacing:0.1em;}
+.room-sidebar{width:190px;background:var(--sf);border-left:1px solid var(--br);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+.sidebar-label{padding:0.85rem 1rem 0.6rem;font-size:0.58rem;letter-spacing:0.18em;color:var(--mt);border-bottom:1px solid var(--br);}
+.room-btn{padding:0.85rem 1rem;border:none;background:transparent;color:var(--mt);font-family:inherit;font-size:0.7rem;
+  text-align:left;cursor:pointer;border-bottom:1px solid rgba(184,150,106,0.06);transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;}
+.room-btn:hover{background:var(--sf2);color:var(--tx);}
+.room-btn.active{color:var(--g);background:rgba(184,150,106,0.07);}
+.rdot{width:6px;height:6px;border-radius:50%;background:var(--br);flex-shrink:0;}
+.room-btn.active .rdot{background:var(--g);}
+.vftr{padding:0.7rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--br);background:var(--sf);}
+.vhint{font-size:0.62rem;color:var(--mt);letter-spacing:0.05em;}
+
+/* EMBED PANEL */
+.emp{display:none;background:var(--sf2);border-top:1px solid var(--br);padding:1.25rem 1.5rem;}
+.emp.open{display:block;}
+.emp h3{font-family:Georgia,serif;font-size:0.95rem;font-weight:400;margin-bottom:0.5rem;}
+.emp p{font-size:0.7rem;color:var(--mt);margin-bottom:0.6rem;}
+.emp pre{background:var(--dk);border:1px solid var(--br);padding:0.85rem;font-size:0.63rem;
+  color:var(--g);overflow-x:auto;line-height:1.7;white-space:pre-wrap;word-break:break-all;}
+.em-acts{display:flex;gap:0.5rem;margin-top:0.65rem;}
+.em-acts button{padding:0.5rem 1rem;font-family:inherit;font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;}
+.em-copy{background:var(--g);color:var(--dk);border:none;font-weight:600;}
+.em-close{background:transparent;border:1px solid var(--br);color:var(--mt);}
+.em-close:hover{color:var(--tx);}
+
+/* ADMIN LOCK */
+.admin-lock-overlay{position:fixed;inset:0;background:rgba(14,14,14,0.95);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.admin-lock-overlay.open{opacity:1;pointer-events:all;}
+.admin-lock-card{width:100%;max-width:340px;border:1px solid var(--br);background:var(--sf);padding:2.2rem 1.8rem;text-align:center;}
+.admin-lock-card .glabel{font-size:0.6rem;letter-spacing:0.22em;color:var(--g);margin-bottom:1.4rem;}
+.admin-lock-card h2{font-family:Georgia,serif;font-size:1.5rem;font-weight:400;line-height:1.2;}
+.admin-lock-card .gdiv{width:26px;height:1px;background:var(--g);margin:1.1rem auto;}
+.admin-lock-card input{width:100%;background:var(--dk);border:1px solid rgba(184,150,106,0.3);color:var(--tx);
+  padding:0.8rem;font-family:inherit;font-size:0.78rem;letter-spacing:0.2em;text-align:center;
+  outline:none;margin-bottom:0.7rem;transition:border-color 0.2s;}
+.admin-lock-card input:focus{border-color:var(--g);}
+.admin-lock-card .enter-btn{width:100%;padding:0.8rem;background:var(--g);color:var(--dk);border:none;
+  font-family:inherit;font-size:0.68rem;letter-spacing:0.18em;cursor:pointer;font-weight:600;}
+.admin-lock-card .gerr{color:var(--red);font-size:0.68rem;margin-top:0.6rem;min-height:1.2rem;}
+
+/* ADMIN */
+.admin-body{display:flex;height:calc(100vh - 54px);}
+.admin-side{width:210px;background:var(--sf);border-right:1px solid var(--br);display:flex;flex-direction:column;}
+.anav{padding:0.9rem 1.2rem;border:none;background:transparent;color:var(--mt);font-family:inherit;
+  font-size:0.7rem;letter-spacing:0.06em;text-align:left;cursor:pointer;
+  border-bottom:1px solid rgba(184,150,106,0.06);transition:all 0.2s;display:flex;align-items:center;gap:0.6rem;}
+.anav:hover{background:var(--sf2);color:var(--tx);}
+.anav.active{color:var(--g);background:rgba(184,150,106,0.07);border-left:2px solid var(--g);padding-left:calc(1.2rem - 2px);}
+.admin-main{flex:1;overflow-y:auto;padding:1.75rem 2rem;}
+.admin-main h2{font-family:Georgia,serif;font-size:1.6rem;font-weight:400;margin-bottom:1rem;}
+.note{font-size:0.7rem;color:var(--mt);margin-bottom:1.5rem;padding:0.65rem 0.9rem;
+  border-left:2px solid var(--g);background:var(--sf);line-height:1.7;}
+
+/* CODES TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:0.78rem;margin-bottom:2rem;}
+.tbl th{text-align:left;padding:0.55rem 0.9rem;font-size:0.6rem;letter-spacing:0.15em;
+  color:var(--mt);border-bottom:1px solid var(--br);font-weight:400;}
+.tbl td{padding:0.85rem 0.9rem;border-bottom:1px solid rgba(184,150,106,0.06);vertical-align:middle;}
+.tbl td.pw{font-family:monospace;color:var(--g);letter-spacing:0.12em;font-size:0.85rem;}
+.tbl td.dim{font-size:0.65rem;color:var(--mt);}
+.cpbtn{background:var(--sf2);border:1px solid var(--br);color:var(--tx);font-size:0.62rem;
+  letter-spacing:0.08em;padding:0.32rem 0.65rem;cursor:pointer;font-family:inherit;transition:all 0.2s;margin-right:0.4rem;}
+.cpbtn:hover{background:var(--g);color:var(--dk);border-color:var(--g);}
+
+/* BUILDER */
+.section{margin-bottom:2rem;}
+.section h3{font-family:Georgia,serif;font-size:1.1rem;font-weight:400;
+  margin-bottom:0.8rem;padding-bottom:0.5rem;border-bottom:1px solid var(--br);}
+.prop-card{background:var(--sf);border:1px solid var(--br);padding:1rem 1.2rem;margin-bottom:0.75rem;}
+.prop-card-hdr{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;}
+.prop-card-hdr h4{font-size:0.82rem;font-weight:400;flex:1;}
+.pw-badge{font-family:monospace;font-size:0.72rem;color:var(--g);
+  background:rgba(184,150,106,0.1);border:1px solid rgba(184,150,106,0.25);padding:0.2rem 0.6rem;}
+.room-rows{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.5rem;}
+.room-row{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.75rem;
+  background:var(--sf2);border:1px solid rgba(184,150,106,0.08);font-size:0.72rem;}
+.room-row .rn{flex:1;color:var(--tx);}
+.room-row .rf{color:var(--mt);font-family:monospace;font-size:0.63rem;}
+
+/* ADD FORM */
+.add-form{background:var(--sf);border:1px solid var(--br);padding:1.25rem 1.4rem;}
+.add-form h4{font-size:0.8rem;letter-spacing:0.1em;font-weight:400;margin-bottom:1rem;color:var(--g);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;}
+.fg{display:flex;flex-direction:column;gap:0.3rem;}
+.fg label{font-size:0.6rem;letter-spacing:0.14em;color:var(--mt);}
+.ti{background:var(--dk);border:1px solid rgba(184,150,106,0.25);color:var(--tx);
+  padding:0.5rem 0.75rem;font-family:inherit;font-size:0.72rem;outline:none;
+  transition:border-color 0.2s;width:100%;}
+.ti:focus{border-color:var(--g);}
+.ti::placeholder{color:var(--mt);}
+.drop-zone{border:1px dashed rgba(184,150,106,0.3);padding:1.5rem;text-align:center;
+  cursor:pointer;transition:all 0.2s;position:relative;margin-bottom:0.5rem;}
+.drop-zone:hover{border-color:var(--g);background:rgba(184,150,106,0.04);}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-zone p{font-size:0.7rem;color:var(--mt);line-height:1.7;}
+.file-items{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.5rem;}
+.fi{display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0.7rem;background:var(--sf2);font-size:0.7rem;}
+.fi .fn{flex:1;color:var(--tx);font-family:monospace;font-size:0.65rem;}
+.fi .fs{color:var(--mt);font-size:0.6rem;}
+.fi .will-resize{color:var(--g);font-size:0.58rem;margin-left:4px;}
+.fi-rm{background:none;border:none;color:var(--red);cursor:pointer;font-size:0.9rem;padding:0 0.2rem;}
+.form-acts{display:flex;gap:0.75rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--br);}
+.status{font-size:0.7rem;padding:0.5rem 0.75rem;margin-top:0.75rem;}
+.status.ok{background:rgba(92,184,92,0.1);border:1px solid rgba(92,184,92,0.3);color:var(--green);}
+.status.err{background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.3);color:var(--red);}
+.status.info{background:rgba(184,150,106,0.08);border:1px solid rgba(184,150,106,0.2);color:var(--mt);}
+
+/* DEPLOY STEPS */
+.steps{display:flex;flex-direction:column;gap:1rem;}
+.step{display:flex;gap:1rem;padding:1rem;background:var(--sf);border:1px solid var(--br);}
+.snum{width:28px;height:28px;background:var(--g);color:var(--dk);
+  display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:600;flex-shrink:0;}
+.sbody h4{font-size:0.78rem;font-weight:400;margin-bottom:0.3rem;}
+.sbody p{font-size:0.7rem;color:var(--mt);line-height:1.7;}
+.sbody code{font-family:monospace;color:var(--g);background:rgba(184,150,106,0.1);padding:0.1rem 0.35rem;font-size:0.7rem;}
+
+/* CONTACT SECTION */
+.contact-section{padding:2.5rem 2rem;border-top:1px solid var(--br);text-align:center;}
+.contact-section h2{font-family:Georgia,serif;font-size:1.6rem;font-weight:400;margin-bottom:0.5rem;}
+.contact-section .gold-line{margin:1.2rem auto;}
+.contact-section p{color:var(--mt);font-size:0.7rem;letter-spacing:0.1em;margin-bottom:1.5rem;}
+.contact-grid{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;max-width:500px;margin:0 auto;}
+.contact-item{display:flex;align-items:center;gap:0.75rem;background:var(--sf);border:1px solid var(--br);padding:0.85rem 1.2rem;transition:border-color 0.2s;}
+.contact-item:hover{border-color:var(--brh);}
+.contact-item svg{flex-shrink:0;color:var(--g);}
+.contact-item a{color:var(--tx);text-decoration:none;font-size:0.8rem;letter-spacing:0.04em;}
+.contact-item a:hover{color:var(--g);}
+.contact-item span{color:var(--tx);font-size:0.8rem;letter-spacing:0.04em;}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="page active" id="pg-home">
+  <div class="hdr">
+    <div class="logo" id="logo-click">Immersive<em>Estates</em></div>
+  </div>
+  <div class="hero">
+    <h1 style="font-family:Georgia,serif;font-size:2.2rem;font-weight:400;line-height:1.15;">Every Room,<br>Perfectly Presented</h1>
+    <p>SELECT A PROPERTY TO BEGIN YOUR TOUR</p>
+    <div class="gold-line"></div>
+  </div>
+  <div class="pgrid" id="pgrid"><div class="empty">Loading properties…</div></div>
+
+  <!-- CONTACT SECTION -->
+  <div class="contact-section" id="contact-section">
+    <div class="gold-line"></div>
+    <h2>Get in Touch</h2>
+    <p>Want your own property photographed? Let's talk.</p>
+    <div class="contact-grid">
+      <div class="contact-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8966A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <a href="mailto:ethangrey@outlook.com">ethangrey@outlook.com</a>
+      </div>
+      <div class="contact-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8966A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+        <span>631-882-0227</span>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;">
+      <a class="btn-gold" href="mailto:ethangrey@outlook.com" style="text-decoration:none;display:inline-block;">→ Email Me</a>
+    </div>
+  </div>
+
+  <div class="secret-hint" id="secret-hint"></div>
+</div>
+
+<!-- ADMIN LOCK OVERLAY -->
+<div class="admin-lock-overlay" id="admin-lock">
+  <div class="admin-lock-card">
+    <div class="glabel">IMMERSIVE ESTATES</div>
+    <h2>Admin Access</h2>
+    <div class="gdiv"></div>
+    <input type="password" id="admin-pw-input" placeholder="ENTER PASSWORD" onkeydown="if(event.key==='Enter')checkAdminPw()"/>
+    <button class="enter-btn" onclick="checkAdminPw()">UNLOCK</button>
+    <button class="btn-dim" style="margin-top:0.5rem;width:100%;" onclick="closeAdminLock()">Cancel</button>
+    <div class="gerr" id="admin-pw-err"></div>
+  </div>
+</div>
+
+<!-- VIEWER -->
+<div class="page" id="pg-viewer">
+  <div class="hdr">
+    <button class="home-btn" onclick="nav('home')" title="Home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    </button>
+    <div class="crumb"><span>Properties</span><span style="opacity:.4">›</span><b id="v-addr"></b><span style="opacity:.4" id="v-room-sep">›</span><b id="v-room"></b></div>
+    <button class="btn-out" onclick="toggleEmbed()">↗ Embed Code</button>
+  </div>
+  <div class="viewer-body">
+    <div id="pano-loading">Loading panorama…</div>
+    <div id="pano" style="display:none;flex:1;"></div>
+    <div class="room-sidebar" id="room-sidebar" style="display:none;">
+      <div class="sidebar-label">ROOMS</div>
+      <div id="room-btns"></div>
+    </div>
+  </div>
+  <div class="vftr">
+    <span class="vhint">Drag to explore · Scroll to zoom · Click arrows to move between rooms</span>
+    <button class="btn-dim" onclick="toggleEmbed()">Get Embed Code</button>
+  </div>
+  <div class="emp" id="emp">
+    <h3>Embed This Tour</h3>
+    <p>Copy this one line and paste it into your client's website — the full interactive tour appears right on their page.</p>
+    <pre id="em-code"></pre>
+    <div class="em-acts">
+      <button class="em-copy" onclick="copyEmbed(this)">Copy Code</button>
+      <button class="em-close" onclick="toggleEmbed()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="pg-admin">
+  <div class="hdr">
+    <button class="home-btn" onclick="nav('home')" title="Home">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    </button>
+    <div class="crumb"><span>Home</span><span style="opacity:.4">›</span><b>Admin</b></div>
+    <div class="logo">Immersive<em>Estates</em> <span style="font-size:0.5rem;color:var(--mt);letter-spacing:0.18em;">ADMIN</span></div>
+  </div>
+  <div class="admin-body">
+    <div class="admin-side">
+      <button class="anav active" id="anav-codes" onclick="aTab('codes',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Access Codes
+      </button>
+      <button class="anav" id="anav-builder" onclick="aTab('builder',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Tour Builder
+      </button>
+      <button class="anav" id="anav-deploy" onclick="aTab('deploy',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        How To Deploy
+      </button>
+    </div>
+    <div class="admin-main">
+
+      <div id="tab-codes">
+        <h2>Access Codes</h2>
+        <div class="note">Auto-generated from each property address. Codes never change unless you change the address. (Property passwords are currently disabled — customers can view tours directly.)</div>
+        <table class="tbl">
+          <thead><tr><th>PROPERTY</th><th>ACCESS CODE</th><th>ROOMS</th><th></th></tr></thead>
+          <tbody id="codes-body"></tbody>
+        </table>
+      </div>
+
+      <div id="tab-builder" style="display:none;">
+        <h2>Tour Builder</h2>
+        <div class="note">Add a property, upload your 360° photos (one per room), and the app links everything together automatically. Photos are auto-resized — drop in your full-size files.</div>
+        <div class="section">
+          <h3>Your Properties</h3>
+          <div id="prop-list"><p style="font-size:.75rem;color:var(--mt);">No properties yet.</p></div>
+        </div>
+        <div class="section">
+          <h3>Add New Property</h3>
+          <div class="add-form">
+            <h4>PROPERTY DETAILS</h4>
+            <div class="frow">
+              <div class="fg"><label>STREET ADDRESS</label><input class="ti" id="f-addr" placeholder="e.g. 108 Lawrence Lane"/></div>
+              <div class="fg"><label>CITY / AREA (optional)</label><input class="ti" id="f-city" placeholder="e.g. Bayshore, NY"/></div>
+            </div>
+            <div class="fg" style="margin-bottom:.75rem;">
+              <label>UPLOAD 360° PHOTOS — one per room</label>
+              <div class="drop-zone">
+                <input type="file" id="photo-input" multiple accept=".jpg,.jpeg,.png" onchange="onFiles(this.files)"/>
+                <p>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(184,150,106,0.4)" stroke-width="1.5" style="display:block;margin:0 auto 0.5rem;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Drag &amp; drop your 360° photos here or click to browse<br>
+                  <span style="font-size:.62rem;opacity:.55;">JPG · PNG · any size · one file per room</span>
+                </p>
+              </div>
+              <div class="file-items" id="file-list"></div>
+            </div>
+            <div class="form-acts">
+              <button class="btn-gold" id="add-btn" onclick="addProperty()">Add Property &amp; Generate Tour</button>
+              <button class="btn-dim" onclick="clearForm()">Clear</button>
+            </div>
+            <div id="build-status"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-deploy" style="display:none;">
+        <h2>How to Deploy</h2>
+        <div class="note">Follow these steps once to get ImmersiveEstates live on the internet. After that, adding new properties just means adding photos in the Tour Builder.</div>
+        <div class="steps">
+          <div class="step"><div class="snum">1</div><div class="sbody"><h4>Open the Tour Builder first</h4><p>Add your properties and photos here in the Admin panel. Everything saves in your browser automatically — no files to manage until you're ready to go live.</p></div></div>
+          <div class="step"><div class="snum">2</div><div class="sbody"><h4>Sign up for Netlify (free)</h4><p>Go to <strong>netlify.com</strong> and create a free account. No credit card needed. This is where your site will live.</p></div></div>
+          <div class="step"><div class="snum">3</div><div class="sbody"><h4>Deploy by drag and drop</h4><p>On the Netlify dashboard, find the box that says <em>"Deploy manually"</em> or <em>"drag and drop your site folder"</em>. Drag the entire <code>immersiveestates</code> folder into that box. Your site goes live in under 30 seconds.</p></div></div>
+          <div class="step"><div class="snum">4</div><div class="sbody"><h4>Note: photos live in your browser</h4><p>Right now your photos are stored in your browser (IndexedDB). For the deployed site on Netlify, photos need to be in the <code>photos/</code> folder inside the project. Ask your assistant to walk you through this export step when you're ready.</p></div></div>
+          <div class="step"><div class="snum">5</div><div class="sbody"><h4>Send your client their link + code</h4><p>Share the tour URL with your client along with their access code from the Access Codes tab. For embed, use the Get Embed Code button inside the tour viewer.</p></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// IndexedDB storage
+// ══════════════════════════════════════
+let _db = null;
+let PROPS = [];
+
+function initDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('ImmersiveEstatesDB',1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore('props',{keyPath:'id'});
+    r.onsuccess = e => { _db = e.target.result; res(); };
+    r.onerror = () => rej(r.error);
+  });
+}
+function dbAll(){ return new Promise((res,rej)=>{ const r=_db.transaction('props','readonly').objectStore('props').getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error); }); }
+function dbPut(p){ return new Promise((res,rej)=>{ const r=_db.transaction('props','readwrite').objectStore('props').put(p); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function dbDel(id){ return new Promise((res,rej)=>{ const r=_db.transaction('props','readwrite').objectStore('props').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+
+// ══════════════════════════════════════
+// Helpers
+// ══════════════════════════════════════
+function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); }
+function genPw(s){
+  const w=['oak','elm','bay','ivy','ash','pine','cedar','birch','maple','stone'];
+  let h=0; for(let i=0;i<s.length;i++) h=(Math.imul(31,h)+s.charCodeAt(i))|0;
+  h=Math.abs(h); return w[h%w.length]+((h>>3)%9000+1000);
+}
+
+// ══════════════════════════════════════
+// Navigation
+// ══════════════════════════════════════
+let logoClicks=0, logoTimer=null;
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pg-'+page).classList.add('active');
+}
+
+// Admin lock: triple-click logo → password prompt
+document.getElementById('logo-click').addEventListener('click',()=>{
+  logoClicks++;
+  clearTimeout(logoTimer);
+  const hint = document.getElementById('secret-hint');
+  if(logoClicks===3){
+    logoClicks=0; hint.textContent='';
+    document.getElementById('admin-lock').classList.add('open');
+    document.getElementById('admin-pw-input').value='';
+    document.getElementById('admin-pw-err').textContent='';
+    document.getElementById('admin-pw-input').focus();
+    return;
+  }
+  hint.textContent = logoClicks===1 ? 'Click again...' : 'One more...';
+  logoTimer = setTimeout(()=>{ logoClicks=0; hint.textContent=''; }, 1400);
+});
+
+const ADMIN_PASSWORD = 'EGLimm01#';
+
+function checkAdminPw(){
+  const v = document.getElementById('admin-pw-input').value.trim();
+  if(v === ADMIN_PASSWORD){
+    document.getElementById('admin-lock').classList.remove('open');
+    renderAdmin();
+    nav('admin');
+  } else {
+    document.getElementById('admin-pw-err').textContent = 'Incorrect password.';
+    document.getElementById('admin-pw-input').value='';
+  }
+}
+function closeAdminLock(){
+  document.getElementById('admin-lock').classList.remove('open');
+  logoClicks=0;
+}
+
+// ══════════════════════════════════════
+// Home grid — direct to viewer, no password gate
+// ══════════════════════════════════════
+function renderGrid(){
+  const el = document.getElementById('pgrid');
+  if(!PROPS.length){ el.innerHTML='<div class="empty">No properties yet.</div>'; return; }
+  el.innerHTML = PROPS.map(p=>{
+    const thumb = p.scenes&&p.scenes[0]&&p.scenes[0].dataUrl
+      ? `<img src="${p.scenes[0].dataUrl}" alt="${p.address}"/>`
+      : `<div class="icon"><svg width="40" height="40" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="22" cy="22" r="19"/><ellipse cx="22" cy="22" rx="10" ry="19"/><line x1="3" y1="22" x2="41" y2="22"/><path d="M6 14 Q22 18 38 14"/><path d="M6 30 Q22 26 38 30"/></svg><span>360° TOUR</span></div>`;
+    const rc = p.scenes?p.scenes.length:0;
+    return `<div class="pcard" onclick="openViewerDirect('${p.id}')">
+      <div class="pthumb">${thumb}<div class="tbadge">360° TOUR</div>${rc>1?`<div class="rcount">${rc} ROOMS</div>`:''}</div>
+      <div class="pinfo"><h3>${p.address.toUpperCase()}</h3><p>${p.city||''}</p><p style="margin-top:.4rem;">${rc} room${rc!==1?'s':''} · Interactive Tour</p>
+      <button class="view-btn">View Tour →</button></div></div>`;
+  }).join('');
+}
+
+function openViewerDirect(id){
+  cur = PROPS.find(p=>p.id===id);
+  if(!cur) return;
+  openViewer();
+}
+
+// ══════════════════════════════════════
+// Viewer — Three.js
+// ══════════════════════════════════════
+let cur = null;
+let curScene=0;
+let threeRenderer=null, threeScene=null, threeCamera=null, threeMesh=null;
+let animId=null, isDragging=false, prevX=0, prevY=0;
+let lon=180, lat=0, viewFov=75, autoRot=true, autoRotTimer=null;
+
+function openViewer(){
+  nav('viewer');
+  document.getElementById('v-addr').textContent = cur.address;
+  document.getElementById('emp').classList.remove('open');
+  loadScene(0);
+}
+
+function loadScene(idx){
+  curScene = idx;
+  const sc = cur.scenes[idx];
+  if(!sc){ document.getElementById('pano-loading').textContent='No scenes available.'; return; }
+  document.getElementById('v-room').textContent = sc.title;
+  document.getElementById('v-room-sep').style.display = cur.scenes.length>1?'':'none';
+  buildRoomSidebar();
+
+  const panoEl = document.getElementById('pano');
+  document.getElementById('pano-loading').style.display='flex';
+  document.getElementById('pano-loading').textContent='Loading panorama…';
+  panoEl.style.display='none';
+
+  const img = new Image();
+  img.onload = ()=>{
+    document.getElementById('pano-loading').style.display='none';
+    panoEl.style.display='block';
+    if(threeRenderer) swapTexture(img);
+    else              initThree(panoEl, img);
+  };
+  img.onerror = ()=>{
+    document.getElementById('pano-loading').textContent='Could not load panorama image.';
+  };
+  img.src = sc.dataUrl || sc.imageUrl || '';
+}
+
+function initThree(container, img){
+  if(animId){ cancelAnimationFrame(animId); animId=null; }
+  if(threeRenderer){ threeRenderer.dispose(); container.innerHTML=''; }
+
+  const W=container.clientWidth||800, H=container.clientHeight||500;
+  threeScene  = new THREE.Scene();
+  threeCamera = new THREE.PerspectiveCamera(viewFov, W/H, 0.1, 1000);
+  threeRenderer = new THREE.WebGLRenderer({antialias:true});
+  threeRenderer.setPixelRatio(window.devicePixelRatio);
+  threeRenderer.setSize(W, H);
+  container.appendChild(threeRenderer.domElement);
+
+  const geo = new THREE.SphereGeometry(500,64,32);
+  geo.scale(-1,1,1);
+  const tex = new THREE.Texture(img);
+  tex.needsUpdate = true;
+  threeMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({map:tex}));
+  threeScene.add(threeMesh);
+
+  new ResizeObserver(()=>{
+    if(!threeRenderer||!threeCamera) return;
+    const w=container.clientWidth, h=container.clientHeight;
+    threeCamera.aspect=w/h; threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(w,h);
+  }).observe(container);
+
+  const cv = threeRenderer.domElement;
+  cv.style.cursor='grab';
+  cv.addEventListener('mousedown', e=>{ isDragging=true; prevX=e.clientX; prevY=e.clientY; autoRot=false; cv.style.cursor='grabbing'; });
+  window.addEventListener('mouseup', ()=>{ isDragging=false; cv.style.cursor='grab'; scheduleAutoRot(); });
+  window.addEventListener('mousemove', e=>{ if(isDragging){ rotateCam(e.clientX-prevX,e.clientY-prevY); prevX=e.clientX; prevY=e.clientY; }});
+  cv.addEventListener('touchstart', e=>{ isDragging=true; prevX=e.touches[0].clientX; prevY=e.touches[0].clientY; autoRot=false; },{passive:true});
+  window.addEventListener('touchend', ()=>{ isDragging=false; scheduleAutoRot(); });
+  window.addEventListener('touchmove', e=>{ if(isDragging){ rotateCam(e.touches[0].clientX-prevX,e.touches[0].clientY-prevY); prevX=e.touches[0].clientX; prevY=e.touches[0].clientY; }},{passive:true});
+  cv.addEventListener('wheel', e=>{ viewFov=Math.max(30,Math.min(110,viewFov+e.deltaY*0.05)); threeCamera.fov=viewFov; threeCamera.updateProjectionMatrix(); },{passive:true});
+
+  function rotateCam(dx,dy){ lon-=dx*0.25; lat=Math.max(-85,Math.min(85,lat+dy*0.25)); }
+  function scheduleAutoRot(){ clearTimeout(autoRotTimer); autoRotTimer=setTimeout(()=>autoRot=true,3000); }
+
+  (function render(){
+    animId=requestAnimationFrame(render);
+    if(autoRot) lon+=0.04;
+    const phi=THREE.MathUtils.degToRad(90-lat), theta=THREE.MathUtils.degToRad(lon);
+    threeCamera.lookAt(500*Math.sin(phi)*Math.cos(theta), 500*Math.cos(phi), 500*Math.sin(phi)*Math.sin(theta));
+    threeRenderer.render(threeScene,threeCamera);
+  })();
+}
+
+function swapTexture(img){
+  const tex=new THREE.Texture(img); tex.needsUpdate=true;
+  threeMesh.material.map.dispose();
+  threeMesh.material.map=tex;
+  threeMesh.material.needsUpdate=true;
+}
+
+function buildRoomSidebar(){
+  const sb=document.getElementById('room-sidebar');
+  const btn=document.getElementById('room-btns');
+  if(!cur||cur.scenes.length<2){ sb.style.display='none'; return; }
+  sb.style.display='flex';
+  btn.innerHTML=cur.scenes.map((sc,i)=>`
+    <button class="room-btn ${i===curScene?'active':''}" onclick="switchRoom(${i})">
+      <div class="rdot"></div>${sc.title}
+    </button>`).join('');
+}
+
+function switchRoom(i){ loadScene(i); }
+
+// ══════════════════════════════════════
+// Embed
+// ══════════════════════════════════════
+function toggleEmbed(){
+  const p=document.getElementById('emp');
+  if(!p.classList.contains('open')){
+    document.getElementById('em-code').textContent=
+`<iframe
+  src="https://immersive-estates.netlify.app"
+  width="100%"
+  height="600"
+  frameborder="0"
+  allow="fullscreen"
+  title="${cur.address} — 360 Tour by ImmersiveEstates"
+  style="border:none;">
+</iframe>`;
+  }
+  p.classList.toggle('open');
+}
+function copyEmbed(btn){
+  navigator.clipboard.writeText(document.getElementById('em-code').textContent);
+  btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy Code',2000);
+}
+
+// ══════════════════════════════════════
+// Admin
+// ══════════════════════════════════════
+function renderAdmin(){ renderCodes(); renderPropList(); }
+
+function aTab(name, btn){
+  ['codes','builder','deploy'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
+  });
+  document.querySelectorAll('.anav').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function renderCodes(){
+  const tb=document.getElementById('codes-body');
+  if(!PROPS.length){ tb.innerHTML='<tr><td colspan="4" style="color:var(--mt);font-size:.72rem;padding:1.5rem .9rem;">No properties added yet.</td></tr>'; return; }
+  tb.innerHTML=PROPS.map(p=>`<tr>
+    <td>${p.address}${p.city?`<br><span style="color:var(--mt);font-size:.65rem;">${p.city}</span>`:''}</td>
+    <td class="pw">${p.password}</td>
+    <td class="dim">${p.scenes?p.scenes.map(s=>s.title).join(', '):'-'}</td>
+    <td>
+      <button class="cpbtn" onclick="cp('${p.password}',this)">Copy Code</button>
+      <button class="btn-del" onclick="delProp('${p.id}')">Delete</button>
+    </td></tr>`).join('');
+}
+
+function renderPropList(){
+  const el=document.getElementById('prop-list');
+  if(!PROPS.length){ el.innerHTML='<p style="font-size:.75rem;color:var(--mt);">No properties yet. Add one below.</p>'; return; }
+  el.innerHTML=PROPS.map(p=>`
+    <div class="prop-card">
+      <div class="prop-card-hdr">
+        <h4>${p.address}${p.city?` <span style="color:var(--mt);font-weight:400;font-size:.75rem;">· ${p.city}</span>`:''}</h4>
+        <span class="pw-badge">${p.password}</span>
+        <button class="btn-del" onclick="delProp('${p.id}')">Delete</button>
+      </div>
+      <div class="room-rows">${(p.scenes||[]).map(sc=>`
+        <div class="room-row"><span class="rn">${sc.title}</span><span class="rf">${sc.filename||'uploaded'}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function delProp(id){
+  if(!confirm('Delete this property?')) return;
+  dbDel(id).then(()=>{ PROPS=PROPS.filter(p=>p.id!==id); renderGrid(); renderAdmin(); }).catch(e=>alert('Error: '+e.message));
+}
+
+function cp(txt,btn){
+  navigator.clipboard.writeText(txt);
+  btn.textContent='Copied ✓'; setTimeout(()=>btn.textContent='Copy Code',2000);
+}
+
+// ══════════════════════════════════════
+// Tour Builder
+// ══════════════════════════════════════
+let pendingFiles=[];
+const MAX_W=6000, MAX_H=3000, JPEG_Q=0.85;
+
+function onFiles(files){
+  pendingFiles=[...pendingFiles,...Array.from(files)];
+  renderFileList();
+}
+function renderFileList(){
+  const el=document.getElementById('file-list');
+  if(!pendingFiles.length){ el.innerHTML=''; return; }
+  el.innerHTML=pendingFiles.map((f,i)=>`
+    <div class="fi">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+      <span class="fn">${f.name}</span>
+      <span class="fs">${(f.size/1024/1024).toFixed(1)} MB${f.size>3*1024*1024?'<span class="will-resize">→ auto-resize</span>':''}</span>
+      <button class="fi-rm" onclick="rmFile(${i})">✕</button>
+    </div>`).join('');
+}
+function rmFile(i){ pendingFiles.splice(i,1); renderFileList(); }
+function clearForm(){
+  document.getElementById('f-addr').value='';
+  document.getElementById('f-city').value='';
+  pendingFiles=[]; renderFileList();
+  document.getElementById('build-status').innerHTML='';
+}
+
+function resizeImg(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.width, h=img.height;
+      if(w>MAX_W||h>MAX_H){ const r=Math.min(MAX_W/w,MAX_H/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      res({ dataUrl:c.toDataURL('image/jpeg',JPEG_Q), w, h });
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('Cannot read: '+file.name)); };
+    img.src=url;
+  });
+}
+
+function setStatus(msg,type='info'){
+  document.getElementById('build-status').innerHTML=`<div class="status ${type}">${msg}</div>`;
+}
+
+function addProperty(){
+  const addr=document.getElementById('f-addr').value.trim();
+  const city=document.getElementById('f-city').value.trim();
+  if(!addr){ setStatus('Please enter a street address.','err'); return; }
+  if(!pendingFiles.length){ setStatus('Please upload at least one 360° photo.','err'); return; }
+  const id=slugify(addr);
+  if(PROPS.find(p=>p.id===id)){ setStatus('A property with this address already exists.','err'); return; }
+
+  const btn=document.getElementById('add-btn');
+  btn.disabled=true; btn.textContent='Processing…';
+
+  const scenes=[];
+  function next(i){
+    if(i>=pendingFiles.length){
+      const prop={id,address:addr,city,password:genPw(addr),scenes};
+      dbPut(prop).then(()=>{
+        PROPS.push(prop);
+        renderGrid(); renderAdmin(); clearForm();
+        btn.disabled=false; btn.textContent='Add Property & Generate Tour';
+        setStatus(`✓ "${addr}" added with ${scenes.length} room${scenes.length!==1?'s':''}. Go to the home screen to test it.`,'ok');
+      }).catch(e=>{ btn.disabled=false; btn.textContent='Add Property & Generate Tour'; setStatus('Save error: '+e.message,'err'); });
+      return;
+    }
+    const f=pendingFiles[i];
+    setStatus(`Resizing photo ${i+1} of ${pendingFiles.length}: ${f.name}…`);
+    resizeImg(f).then(({dataUrl,w,h})=>{
+      const base=f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ');
+      const title=base.charAt(0).toUpperCase()+base.slice(1);
+      scenes[i]={id:slugify(title)||`room-${i+1}`,title:title||`Room ${i+1}`,filename:f.name,resizedTo:`${w}×${h}`,dataUrl};
+      next(i+1);
+    }).catch(e=>{ btn.disabled=false; btn.textContent='Add Property & Generate Tour'; setStatus('Error: '+e.message,'err'); });
+  }
+  next(0);
+}
+
+// ══════════════════════════════════════
+// Boot
+// ══════════════════════════════════════
+renderGrid();
+
+initDB()
+  .then(()=>dbAll())
+  .then(rows=>{ if(rows && rows.length){ PROPS=rows; renderGrid(); } })
+  .catch(err=>{
+    console.warn('IndexedDB unavailable (likely local file://):', err.message);
+  });
+</script>
+</body>
+</html>
